@@ -1,0 +1,70 @@
+flowchart LR
+ subgraph UserService["UserService"]
+        UserDB[("User DB")]
+  end
+ subgraph ChatService["ChatService"]
+        ChatDB[("Chat DB")]
+  end
+ subgraph CompetitionService["CompetitionService"]
+        CompetitionDB[("Competition DB")]
+  end
+ subgraph CompetitionEngine["CompetitionEngine"]
+        EngineDB[("Engine DB")]
+  end
+ subgraph StatisticsService["StatisticsService"]
+        StatisticsDB[("Statistics DB")]
+  end
+ subgraph FeedbackService["FeedbackService"]
+        FeedbackDB[("Feedback DB")]
+  end
+    IOS["iOS App"] -- "POST /register
+POST /login
+POST /refresh-token
+GET /users/{userId}
+PUT /users/{userId}
+PATCH /users/{userId}/password
+POST /users/{userId}/password-reset-request
+PUT /users/{userId}/password-reset" --> UserService
+    IOS -- GET /competitions
+POST /competitions
+GET /competitions/{competitionId}
+PUT /competitions/{competitionId}
+DELETE /competitions/{competitionId}
+GET /competitions/{competitionId}/registrations
+POST /competitions/{competitionId}/registrations
+DELETE /competitions/{competitionId}/registrations/{registrationId}
+POST /competitions/{competitionId}/finish --> CompetitionService
+    IOS -- GET /chats
+POST /chats
+GET /chats/{chatId}/members
+POST /chats/{chatId}/members
+DELETE /chats/{chatId}/members/{userId}
+GET /chats/{chatId}/messages
+POST /chats/{chatId}/messages
+DELETE /chats/{chatId}/messages/{messageId}
+POST /chats/{chatId}/mute/{userId}
+POST /chats/{chatId}/unmute/{userId} --> ChatService
+    IOS -- GET /stats/competition/{competitionId}
+GET /stats/player/{playerId}
+GET /stats/team/{teamId}
+GET /stats/leaderboard --> StatisticsService
+    IOS -- POST /feedback/competitions/{competitionId}
+GET /feedback/competitions/{competitionId}
+GET /feedback/{feedbackId}
+PUT /feedback/{feedbackId}
+DELETE /feedback/{feedbackId} --> FeedbackService
+    UserService --> UserDB
+    ChatService --> ChatDB
+    CompetitionService --> CompetitionDB
+    CompetitionEngine --> EngineDB
+    StatisticsService --> StatisticsDB
+    FeedbackService --> FeedbackDB
+    CompetitionService -- POST /engine/schedule
+GET /engine/schedule/{taskId}
+POST /engine/calculate
+GET /engine/calculate/{taskId} --> CompetitionEngine
+    CompetitionService -- POST /stats/update --> StatisticsService
+    ChatService -- GET /users/{userId} --> UserService
+
+
+

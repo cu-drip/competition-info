@@ -1,0 +1,46 @@
+flowchart LR
+    %% Клиентское приложение iOS
+    IOS[iOS App]
+
+    %% Вызовы с iOS
+    IOS --> UserService
+    IOS --> CompetitionService
+    IOS --> ChatService
+    IOS --> StatisticsService
+    IOS --> FeedbackService
+
+    %% Микросервисы и их БД
+    subgraph UserService [UserService]
+        UserDB[(User DB)]
+    end
+    subgraph ChatService [ChatService]
+        ChatDB[(Chat DB)]
+    end
+    subgraph CompetitionService [CompetitionService]
+        CompetitionDB[(Competition DB)]
+    end
+    subgraph CompetitionEngine [CompetitionEngine]
+        EngineDB[(Engine DB)]
+    end
+    subgraph StatisticsService [StatisticsService]
+        StatisticsDB[(Statistics DB)]
+    end
+    subgraph FeedbackService [FeedbackService]
+        FeedbackDB[(Feedback DB)]
+    end
+
+    %% Связи между сервисами и их базами
+    UserService --> UserDB
+    ChatService --> ChatDB
+    CompetitionService --> CompetitionDB
+    CompetitionEngine --> EngineDB
+    StatisticsService --> StatisticsDB
+    FeedbackService --> FeedbackDB
+
+    %% Взаимодействие между сервисами
+    CompetitionService --> CompetitionEngine
+    CompetitionEngine --> CompetitionService
+
+    CompetitionService --> StatisticsService
+
+    ChatService --> UserService
