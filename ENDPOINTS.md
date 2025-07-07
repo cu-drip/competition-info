@@ -45,11 +45,11 @@
 
 ## StatisticsService
 
-* **POST /stats/update** — принимает результаты из CompetitionService после `finish` для агрегации.
-* **GET /stats/competition/{competitionId}** — возвращает агрегированные данные (лидерборд, таблицу результатов).
-* **GET /stats/player/{playerId}** — выводит персональную статистику участника.
+* **POST /stats/update** — загрузка результатов матчей по турниру.
+* **GET /stats/player/{userId}** — возвращает индивидуальную статистику игрока.
 * **GET /stats/team/{teamId}** — возвращает статистику команды.
-* **GET /stats/leaderboard** — общий рейтинг участников/команд по всем соревнованиям.
+* **GET /stats/top/players** — возвращает топ-5 игроков по очкам.
+* **GET /stats/matches/history** — возвращает историю матчей.
 
 ## FeedbackService
 
