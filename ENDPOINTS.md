@@ -15,14 +15,13 @@
 
 * **GET /chats** — показывает список комнат чата на экране «Чаты».
 * **POST /chats** — создаёт новую комнату (например, чат для команды или соревнования).
-* **GET /chats/{chatId}/members** — загружает список участников выбранной комнаты.
-* **POST /chats/{chatId}/members** — приглашает пользователя в комнату по его ID.
-* **DELETE /chats/{chatId}/members/{userId}** — удаляет участника из комнаты (модерация).
-* **GET /chats/{chatId}/messages** — загружает историю сообщений при открытии чата.
-* **POST /chats/{chatId}/messages** — отправляет новое сообщение (текст, эмодзи, файлы).
-* **DELETE /chats/{chatId}/messages/{messageId}** — удаляет сообщение по просьбе модератора.
-* **POST /chats/{chatId}/mute/{userId}** — временно запрещает пользователю отправлять сообщения.
-* **POST /chats/{chatId}/unmute/{userId}** — снимает запрет на отправку сообщений.
+* **GET /chats/{chatId}** — информация о чате.
+* **GET /chats/{chatId}/users** — загружает список участников выбранной комнаты.
+* **POST /chats/{chatId}/users** — приглашает пользователей в комнату по их ID.
+* **DELETE /chats/{chatId}/users/{userId}** — удаляет участника из комнаты.
+* **PATCH /chats/{chatId}/users/{userId}** — mute/unmute пользователя.
+* **GET /chats/{chatId}/messages?limit=100&after=123** — загружает историю сообщений при открытии чата.
+* **WS /ws/chats/{chatId}** — подключится к сокету чата
 
 ## CompetitionService
 

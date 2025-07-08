@@ -36,14 +36,12 @@ DELETE /competitions/{competitionId}/registrations/{registrationId}
 POST /competitions/{competitionId}/finish --> CompetitionService
     IOS -- GET /chats
 POST /chats
-GET /chats/{chatId}/members
-POST /chats/{chatId}/members
-DELETE /chats/{chatId}/members/{userId}
+GET /chats/{chatId}/users
+POST /chats/{chatId}/users
+DELETE /chats/{chatId}/users/{userId}
+PATCH /chats/{chatId}/users/{userId}
 GET /chats/{chatId}/messages
-POST /chats/{chatId}/messages
-DELETE /chats/{chatId}/messages/{messageId}
-POST /chats/{chatId}/mute/{userId}
-POST /chats/{chatId}/unmute/{userId} --> ChatService
+DELETE /chats/{chatId}/messages/{messageId} --> ChatService
     IOS -- GET /stats/competition/{competitionId}
 GET /stats/player/{playerId}
 GET /stats/team/{teamId}

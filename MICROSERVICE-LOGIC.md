@@ -200,10 +200,6 @@
 
    * При критичных отзывах публикует событие NewFeedback в Kafka или уведомляет через NotificationService
 
-4. **Live-обновления**
-
-   * SSE/WebSocket для обновления UI в режиме реального времени (например, в админке)
-
 ## Эндпоинты
 
 * **POST /feedback/competitions/{competitionId}** — отправка нового отзыва
@@ -281,50 +277,33 @@
 1. **Создание и настройка чатов**
 
    * POST /chats — создание комнат для турниров и команд
-   * Каждый чат имеет ID, список участников, права (модератор/пользователь/гость)
+   * Каждый чат имеет ID, список участников, права (модератор/пользователь)
 
 2. **Управление участниками**
 
-   * Приглашение (POST /chats/{chatId}/members), исключение (DELETE), мут/размут
+   * Приглашение (POST /chats/{chatId}/users), исключение (DELETE), мут/размут
 
 3. **Передача сообщений**
 
-   * История хранится в базе и кэшируется в Redis
-   * POST /chats/{chatId}/messages — рассылка по WebSocket всем в комнате
+   * POST /chats/{chatId}/messages — история сообщений
+   * Отправка/получение по вебсокету
 
 4. **Live-логика**
 
-   * WebSocket-сервер (Spring, ws, socket.io), рассылка новых сообщений
+   * WebSocket-сервер, рассылка новых сообщений
    * Горячая модерация — сообщения и муты применяются мгновенно
-
-5. **Пуш-уведомления**
-
-   * Kafka или NotificationService для отправки push, если пользователь не онлайн
-
-6. **Поиск и история**
-
-   * Elasticsearch для поиска по тексту сообщений, пагинация
 
 ## Эндпоинты
 
-* **GET /chats** — список чатов
-* **POST /chats** — создать чат
-* **GET /chats/{chatId}/members** — участники чата
-* **POST /chats/{chatId}/members** — пригласить участника
-* **DELETE /chats/{chatId}/members/{userId}** — исключить участника
-* **GET /chats/{chatId}/messages** — история сообщений
-* **POST /chats/{chatId}/messages** — отправить сообщение
-* **DELETE /chats/{chatId}/messages/{messageId}** — удалить сообщение
-* **POST /chats/{chatId}/mute/{userId}** — замутить участника
-* **POST /chats/{chatId}/unmute/{userId}** — размутить участника
-
-## Реально-временная логика
-
-1. WebSocket-сервер внутри сервиса
-2. Мгновенная модерация и рассылка сообщений
-3. Кэширование истории сообщений в Redis
-4. Push-уведомления через Kafka/NotificationService
-5. Поиск и пагинация (Elasticsearch)
+* **GET /chats** — показывает список комнат чата на экране «Чаты».
+* **POST /chats** — создаёт новую комнату (например, чат для команды или соревнования).
+* **GET /chats/{chatId}** — информация о чате.
+* **GET /chats/{chatId}/users** — загружает список участников выбранной комнаты.
+* **POST /chats/{chatId}/users** — приглашает пользователей в комнату по их ID.
+* **DELETE /chats/{chatId}/users/{userId}** — удаляет участника из комнаты.
+* **PATCH /chats/{chatId}/users/{userId}** — mute/unmute пользователя.
+* **GET /chats/{chatId}/messages?limit=100&after=123** — загружает историю сообщений при открытии чата.
+* **WS /ws/chats/{chatId}** — подключится к сокету чата
 
 ---
 
@@ -444,10 +423,8 @@
 ### Чат
 
 * GET /chats
-* GET /chats/{chatId}/members
+* GET /chats/{chatId}/users
 * GET /chats/{chatId}/messages
-* POST /chats/{chatId}/messages
-* DELETE /chats/{chatId}/messages/{messageId}
 
 ### Статистика
 
