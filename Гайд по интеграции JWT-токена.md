@@ -80,6 +80,7 @@ import io.jsonwebtoken.JwtException;
 import javax.crypto.SecretKey;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -104,21 +105,22 @@ public class JwtTokenProvider {
     }
 
     public UUID getUserIdFromToken(String token) {
-        Claims c = Jwts.parserBuilder()
-            .setSigningKey(jwtKey)
-            .build()
-            .parseClaimsJws(token)
-            .getBody();
-        return UUID.fromString(c.getSubject());
+        Claims claims = Jwts.parserBuilder()
+                            .setSigningKey(jwtKey)
+                            .build()
+                            .parseClaimsJws(token)
+                            .getBody();
+        return UUID.fromString(claims.getSubject());
     }
 
-    public String getEmailFromToken(String token) {
-        Claims c = Jwts.parserBuilder()
-            .setSigningKey(jwtKey)
-            .build()
-            .parseClaimsJws(token)
-            .getBody();
-        return c.get("email", String.class);
+    @SuppressWarnings("unchecked")
+    public List<String> getRolesFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                            .setSigningKey(jwtKey)
+                            .build()
+                            .parseClaimsJws(token)
+                            .getBody();
+        return (List<String>) claims.get("roles");
     }
 }
 ```
@@ -133,6 +135,7 @@ public class JwtTokenProvider {
 package com.example.userservice.security;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import io.jsonwebtoken.Claims;
@@ -142,6 +145,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import com.example.userservice.model.User;
 import com.example.userservice.repository.UserRepository;
 
@@ -206,6 +211,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 public class SecurityConfig {
@@ -234,56 +240,9 @@ public class SecurityConfig {
 
 ---
 
-## 7. Эндпоинты регистрации и логина
 
-```java
-package com.example.userservice.controller;
+## Итоговая схема работы
 
-import com.example.userservice.model.User;
-import com.example.userservice.service.UserService;
-import com.example.userservice.security.JwtTokenProvider;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
-
-@RestController
-@RequestMapping("/api/auth")
-public class AuthController {
-
-    private final UserService authService;
-    private final JwtTokenProvider jwtProvider;
-
-    public AuthController(UserService authService, JwtTokenProvider jwtProvider) {
-        this.authService = authService;
-        this.jwtProvider = jwtProvider;
-    }
-
-    public record RegisterRequest(String email, String password) {}
-    public record LoginRequest(String email, String password) {}
-    public record AuthResponse(String token) {}
-
-    @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest req) {
-        User newUser = authService.register(req.email(), req.password());
-        String token = jwtProvider.generateToken(newUser.getId(), newUser.getEmail());
-        return ResponseEntity.ok(new AuthResponse(token));
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest req) {
-        User user = authService.authenticate(req.email(), req.password());
-        String token = jwtProvider.generateToken(user.getId(), user.getEmail());
-        return ResponseEntity.ok(new AuthResponse(token));
-    }
-}
-```
-
----
-
-## Итог
-
-1. Клиент регистрируется или логинится через `/api/auth/**` и получает JWT.  
-2. На защищённых эндпоинтах отправляет `Authorization: Bearer <token>`.  
-3. `JwtAuthFilter` валидирует токен, извлекает `userId`, загружает `User` и помещает в `SecurityContext`.  
-4. Контроллеры получают аутентифицированного пользователя через `@AuthenticationPrincipal`.  
+1. Клиент отправляет на защищённые эндпоинты header `Authorization: Bearer <token>`, полученный из аутентификационного сервиса.
+2. `JwtAuthFilter` проверяет токен, извлекает `userId` и `roles`, загружает `User` из БД и устанавливает `Authentication`.
+3. Контроллеры получают аутентифицированного пользователя через `@AuthenticationPrincipal` и могут проверить роли через `@PreAuthorize` и другие механизмы безопасности.
