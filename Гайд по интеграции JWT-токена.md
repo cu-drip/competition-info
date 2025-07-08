@@ -40,10 +40,12 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import jakarta.annotation.PostConstruct;
+
 import javax.crypto.SecretKey;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
 
 @Configuration
 public class JwtConfig {
@@ -59,9 +61,10 @@ public class JwtConfig {
     }
 
     @Bean
-    public SecretKey jwtKey() {
-        return Keys.hmacShaKeyFor(secretBytes);
+    public SecretKey jwtKey(@Value("${jwt.secret-file}") String path) throws IOException {
+        return Keys.hmacShaKeyFor(Files.readAllBytes(Path.of(path)));
     }
+
 }
 ```
 
@@ -77,19 +80,37 @@ package com.example.userservice.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.JwtException;
-import javax.crypto.SecretKey;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+
 @Component
 public class JwtTokenProvider {
-
     private final SecretKey jwtKey;
+    private final long jwtExpirationMs = 86400000; // 1 день, если нужно; иначе хранится в Auth-сервисе
 
     public JwtTokenProvider(SecretKey jwtKey) {
         this.jwtKey = jwtKey;
+    }
+
+    public String generateToken(UUID userId,
+                                String email,
+                                List<String> userRolesList) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + jwtExpirationMs);
+        return Jwts.builder()
+            .setSubject(userId.toString())
+            .claim("email", email)
+            .claim("roles", userRolesList)   
+            .setIssuedAt(now)
+            .setExpiration(expiry)
+            .signWith(jwtKey, SignatureAlgorithm.HS256)
+            .compact();
     }
 
     public boolean validateToken(String token) {
@@ -105,22 +126,22 @@ public class JwtTokenProvider {
     }
 
     public UUID getUserIdFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                            .setSigningKey(jwtKey)
-                            .build()
-                            .parseClaimsJws(token)
-                            .getBody();
-        return UUID.fromString(claims.getSubject());
+        Claims c = Jwts.parserBuilder()
+            .setSigningKey(jwtKey)
+            .build()
+            .parseClaimsJws(token)
+            .getBody();
+        return UUID.fromString(c.getSubject());
     }
 
     @SuppressWarnings("unchecked")
     public List<String> getRolesFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                            .setSigningKey(jwtKey)
-                            .build()
-                            .parseClaimsJws(token)
-                            .getBody();
-        return (List<String>) claims.get("roles");
+        Claims c = Jwts.parserBuilder()
+            .setSigningKey(jwtKey)
+            .build()
+            .parseClaimsJws(token)
+            .getBody();
+        return (List<String>) c.get("roles");
     }
 }
 ```
@@ -134,31 +155,33 @@ public class JwtTokenProvider {
 ```java
 package com.example.userservice.security;
 
+import com.example.userservice.model.User;
+import com.example.userservice.repository.UserRepository;
+import io.jsonwebtoken.JwtException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
-import io.jsonwebtoken.Claims;
+
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.example.userservice.model.User;
-import com.example.userservice.repository.UserRepository;
+
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
-
     private final JwtTokenProvider jwtProvider;
     private final UserRepository userRepo;
 
     public JwtAuthFilter(JwtTokenProvider jwtProvider, UserRepository userRepo) {
         this.jwtProvider = jwtProvider;
-        this.userRepo = userRepo;
+        this.userRepo    = userRepo;
     }
 
     @Override
@@ -171,16 +194,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (!isPublic) {
             String header = req.getHeader("Authorization");
-            if (header == null || !header.startsWith("Bearer ")) {
+            if (header == null || !header.toLowerCase().startsWith("bearer ")) {
                 res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                res.getWriter().write("{"message":"Missing or invalid Authorization header"}");
+                res.getWriter().write("{\"message\":\"401: Unauthorized\"}");
                 return;
             }
 
-            String token = header.substring(7);
+            String token = header.substring(header.indexOf(' ') + 1);
             if (!jwtProvider.validateToken(token)) {
                 res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                res.getWriter().write("{"message":"Invalid or expired token"}");
+                res.getWriter().write("{\"message\":\"401: Unauthorized\"}");
                 return;
             }
 
@@ -188,9 +211,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             User user = userRepo.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
+            List<SimpleGrantedAuthority> authorities = jwtProvider.getRolesFromToken(token).stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+
             UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(user, null, user.getRoles().stream()
-                    .map(SimpleGrantedAuthority::new).toList());
+                new UsernamePasswordAuthenticationToken(user, null, authorities);
             SecurityContextHolder.getContext().setAuthentication(authToken);
         }
 
@@ -237,7 +263,6 @@ public class SecurityConfig {
     }
 }
 ```
-
 ---
 
 
