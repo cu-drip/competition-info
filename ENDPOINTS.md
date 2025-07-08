@@ -36,7 +36,7 @@
 * **DELETE /api/v1/tournaments/{id}/register** — отменить регистрацию участника или команды.
 * **POST /api/v1/tournaments/{id}/notify** — отправить уведомления участникам или командам (только для админов).
 
-### TeamService (Реализован в паре TournamentService)
+### TeamService (Реализован в паре CompetitionService)
 
 * **GET /api/v1/teams** — получить список команд.
 * **POST /api/v1/teams** — создать команду (только для админов).
