@@ -25,15 +25,28 @@
 
 ## CompetitionService
 
-* **GET /competitions** — список всех соревнований для каталога.
-* **POST /competitions** — создаёт новое соревнование в админ-интерфейсе или приложении.
-* **GET /competitions/{competitionId}** — детали соревнования: описание, даты, правила.
-* **PUT /competitions/{competitionId}** — обновляет настройки соревнования (название, даты, правила).
-* **DELETE /competitions/{competitionId}** — удаляет соревнование (например, при отмене).
-* **GET /competitions/{competitionId}/registrations** — показывает зарегистрированных участников и команды.
-* **POST /competitions/{competitionId}/registrations** — регистрирует участника или команду.
-* **DELETE /competitions/{competitionId}/registrations/{registrationId}** — отменяет регистрацию.
-* **POST /competitions/{competitionId}/finish** — отмечает соревнование завершённым, инициирует расчёт результатов.
+* **GET /api/v1/tournaments** — получить список турниров.
+* **POST /api/v1/tournaments** — создать новый турнир (только для админов).
+* **GET /api/v1/tournaments/{id}** — получить турнир по ID.
+* **PUT /api/v1/tournaments/{id}** — полностью обновить турнир (только для админов).
+* **PATCH /api/v1/tournaments/{id}** — частично обновить турнир (только для админов).
+* **DELETE /api/v1/tournaments/{id}** — удалить турнир (только для админов).
+* **GET /api/v1/tournaments/{id}/participants** — получить всех участников турнира.
+* **POST /api/v1/tournaments/{id}/register** — зарегистрировать участника или команду.
+* **DELETE /api/v1/tournaments/{id}/register** — отменить регистрацию участника или команды.
+* **POST /api/v1/tournaments/{id}/notify** — отправить уведомления участникам или командам (только для админов).
+
+### TeamService (Реализован в паре TournamentService)
+
+* **GET /api/v1/teams** — получить список команд.
+* **POST /api/v1/teams** — создать команду (только для админов).
+* **GET /api/v1/teams/{id}** — получить команду по ID.
+* **PUT /api/v1/teams/{id}** — Обновить команду целиком (только для админов)
+* **PATCH /api/v1/teams/{id}** — Обновить команду частично (только для админов)
+* **DELETE /api/v1/teams/{id}** — Удалить команду (только для админов)
+* **GET /api/v1/teams/{id}/participants** — Получить всех участников команды
+* **POST /api/v1/teams/{teamId}/participants/{userId}** — Добавить нового участника в команду
+* **DELETE /api/v1/teams/{teamId}/participants/{userId}** — Удалить участника из команды
 
 ## CompetitionEngine
 
