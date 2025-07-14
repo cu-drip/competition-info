@@ -1,35 +1,42 @@
 flowchart LR
-    %% Клиентское приложение iOS
-    IOS[iOS App]
+    %% Клиентские приложения
+    IOS["iOS App"]
+    Web["WebSite"]
+    BFF["BFF (Backend For Frontend)"]
 
-    %% Вызовы с iOS
-    IOS --> UserService
-    IOS --> CompetitionService
-    IOS --> ChatService
-    IOS --> StatisticsService
-    IOS --> FeedbackService
+    %% Вызовы с приложений
+    IOS --> BFF
+    Web --> BFF
 
     %% Микросервисы и их БД
-    subgraph UserService [UserService]
-        UserDB[(User DB)]
+    subgraph UserService ["UserService"]
+        UserDB[("User DB")]
     end
-    subgraph ChatService [ChatService]
-        ChatDB[(Chat DB)]
+    subgraph ChatService ["ChatService"]
+        ChatDB[("Chat DB")]
     end
-    subgraph CompetitionService [CompetitionService]
-        CompetitionDB[(Competition DB)]
+    subgraph CompetitionService ["CompetitionService"]
+        CompetitionDB[("Competition DB")]
     end
-    subgraph CompetitionEngine [CompetitionEngine]
-        EngineDB[(Engine DB)]
+    subgraph CompetitionEngine ["CompetitionEngine"]
+        EngineDB[("Engine DB")]
     end
-    subgraph StatisticsService [StatisticsService]
-        StatisticsDB[(Statistics DB)]
+    subgraph StatisticsService ["StatisticsService"]
+        StatisticsDB[("Statistics DB")]
     end
-    subgraph FeedbackService [FeedbackService]
-        FeedbackDB[(Feedback DB)]
+    subgraph FeedbackService ["FeedbackService"]
+        FeedbackDB[("Feedback DB")]
     end
 
-    %% Связи между сервисами и их базами
+    %% BFF → сервисы
+    BFF --> UserService
+    BFF --> CompetitionService
+    BFF --> ChatService
+    BFF --> StatisticsService
+    BFF --> FeedbackService
+    BFF --> CompetitionEngine
+
+    %% Сервисы и их БД
     UserService --> UserDB
     ChatService --> ChatDB
     CompetitionService --> CompetitionDB
@@ -37,10 +44,8 @@ flowchart LR
     StatisticsService --> StatisticsDB
     FeedbackService --> FeedbackDB
 
-    %% Взаимодействие между сервисами
-    CompetitionService --> CompetitionEngine
-    CompetitionEngine --> CompetitionService
+    %% Новое: Engine → Statistic
+    CompetitionEngine --> StatisticsService
 
-    CompetitionService --> StatisticsService
-
+    %% Существующая связь
     ChatService --> UserService
