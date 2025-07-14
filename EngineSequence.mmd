@@ -1,0 +1,29 @@
+sequenceDiagram
+  participant User as UI
+  participant BFF as BFF
+  participant CompetitionService as CompetitionService
+  participant CompetitionEngine as CompetitionEngine
+  participant StatisticService as StatisticService
+
+  User ->> BFF: POST OPEN GAME WINDOW (BRACKET + INFO)
+  BFF ->> CompetitionService: GET TOUR
+  CompetitionService -->> BFF: TOUR
+  BFF ->> CompetitionEngine: POST TOUR
+  CompetitionEngine -->> BFF: HTTP OK
+  BFF -->> User: HTTP OK
+  User ->> BFF: GET BRACKET
+  BFF ->> CompetitionEngine: GET BRACKET
+  CompetitionEngine ->> StatisticService: POST TOUR
+  CompetitionEngine -->> BFF: BRACKET
+  BFF -->> User: BRACKET
+  User ->> BFF: PATCH BRACKET
+  BFF ->> CompetitionEngine: PATCH BRACKET
+  CompetitionEngine -->> BFF: HTTP OK
+  BFF -->> User: HTTP OK
+  User ->> BFF: PATCH MATCH
+  BFF ->> CompetitionEngine: PATCH MATCH
+  CompetitionEngine ->> StatisticService: POST TOUR
+  CompetitionEngine -->> BFF: HTTP OK
+  BFF ->> CompetitionEngine: GET MATCH
+  CompetitionEngine -->> BFF: MATCH
+  BFF -->> User: MATCH
